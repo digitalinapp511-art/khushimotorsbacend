@@ -33,10 +33,13 @@ import brandRoutes from "./routes/brandRoutes.js";
 import modelRoutes from "./routes/modelRoutes.js";
 import servicePackageRoutes from "./routes/servicePackageRoutes.js";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
+import bookingRoutes from "./routes/bookingRoutes.js";
+import firebaseRoutes from "./routes/firebaseRoutes.js";
 
 // otp api
 app.use("/api/auth", otpRouter);
-  
+app.use("/api/firebase", firebaseRoutes);
+
 // service api
 app.use("/api/services", serviceRoutes);
 
@@ -48,6 +51,8 @@ app.use("/api/brands", brandRoutes);
 app.use("/api/models", modelRoutes);
 
 app.use("/api/packages", servicePackageRoutes);
+
+app.use("/api/bookings", bookingRoutes);
 
 app.get("/", (req, res)=>{
     res.send("server is run");
