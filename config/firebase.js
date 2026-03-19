@@ -1,6 +1,4 @@
 import admin from "firebase-admin";
-import dotenv from "dotenv"
-dotenv.config()
 const noopMessaging = {
   sendEachForMulticast: async () => ({
     successCount: 0,
@@ -14,8 +12,7 @@ let isInitialized = false;
 try {
   if (!admin.apps.length) {
     const raw = process.env.FIREBASE_SERVICE_ACCOUNT || "";
-    console.log("process", raw ? "provided" : "not");
-    console.log("🔥 FIREBASE ENV CHECK:", process.env.FIREBASE_SERVICE_ACCOUNT ? "✅ Found" : "❌ Missing") 
+  
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.private_key) {

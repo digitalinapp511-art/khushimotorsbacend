@@ -6,7 +6,6 @@ import Booking from "../models/Booking.js";
  *
  * Expected body:
  * {
- *   userId: string (ObjectId),
  *   brandId: string (ObjectId),
  *   modelId: string (ObjectId),
  *   servicePackageId: string (ObjectId),
@@ -16,8 +15,8 @@ import Booking from "../models/Booking.js";
  */
 export const createBooking = async (req, res) => {
   try {
+    const userId = req.user?._id;
     const {
-      userId,
       brandId,
       modelId,
       servicePackageId,
@@ -72,8 +71,9 @@ export const createBooking = async (req, res) => {
       brandId,
       modelId,
       servicePackageId,
+      paymentId,
       price,
-      status: "Confirmed", // override default "Pending" on successful payment
+      // status: "Confirmed", // override default "Pending" on successful payment
     });
 
     return res.status(201).json({
@@ -190,6 +190,34 @@ export const updateBookingStatus = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Failed to update booking status",
+    });
+  }
+};
+
+/**
+ * ADMIN - Delete booking
+ */
+export const deleteBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "Booking deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete booking error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to delete booking",
     });
   }
 };

@@ -4,6 +4,7 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit"
 import cookieParser from "cookie-parser"
 import cors from "cors"
+import path from "path";
 
 import connectDB from "./config/db.js";
 
@@ -18,6 +19,7 @@ app.use(cors({
   origin: "http://localhost:5173",
   credentials: true
 }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // OTP Rate Limit
 app.use("/api/auth/send-otp", rateLimit({
@@ -35,6 +37,8 @@ import servicePackageRoutes from "./routes/servicePackageRoutes.js";
 import adminAuthRoutes from "./routes/adminAuthRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import firebaseRoutes from "./routes/firebaseRoutes.js";
+import insuranceRoutes from "./routes/insuranceRoutes.js";
+import queryRoutes from "./routes/queryRoutes.js";
 
 // otp api
 app.use("/api/auth", otpRouter);
@@ -53,6 +57,10 @@ app.use("/api/models", modelRoutes);
 app.use("/api/packages", servicePackageRoutes);
 
 app.use("/api/bookings", bookingRoutes);
+
+app.use("/api/insurance", insuranceRoutes);
+
+app.use("/api/queries", queryRoutes);
 
 app.get("/", (req, res)=>{
     res.send("server is run");

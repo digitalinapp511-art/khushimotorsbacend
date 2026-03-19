@@ -62,8 +62,8 @@ export const firebaseLogin = async (req, res) => {
 
     // 🔐 Generate your app JWT
     const token = generateToken({
-      userId: user._id,
-      phone: cleanFrontendPhone,
+      _id: user._id,
+      mobile: cleanFrontendPhone,
     });
 
     // (optional) store token
@@ -87,3 +87,4 @@ export const firebaseLogin = async (req, res) => {
     });
   }
 };
+

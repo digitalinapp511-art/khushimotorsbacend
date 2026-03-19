@@ -3,7 +3,21 @@ import mongoose from "mongoose";
 const servicePackageSchema = new mongoose.Schema({
 
   serviceName: {
-    type: String
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Service",
+    required: true
+  },
+  
+  brand: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Brand",
+    required: true
+  },
+
+  carModel: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "CarModel",
+    required: true
   },
 
   packageName: {
@@ -21,6 +35,6 @@ const servicePackageSchema = new mongoose.Schema({
     }
   ]
 
-});
+}, { timestamps: true });
 
 export default mongoose.model("ServicePackage", servicePackageSchema);

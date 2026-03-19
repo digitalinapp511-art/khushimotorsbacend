@@ -1,36 +1,61 @@
 import mongoose from "mongoose";
 
-const bookingSchema = new mongoose.Schema({
+const BOOKING_STATUSES = [
+  "Pending",
+  "Confirmed",
+  "In-Progress",
+  "Completed",
+  "Cancelled",
+];
 
+const bookingSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
+    required: true,
+    index: true,
   },
 
   brandId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Brand"
+    ref: "Brand",
+    required: true,
   },
 
   modelId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "CarModel"
+    ref: "CarModel",
+    required: true,
   },
 
   servicePackageId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "ServicePackage"
+    ref: "ServicePackage",
+    required: true,
+  },
+
+  paymentId: {
+    type: String,
+    required: true,
+    trim: true,
+    unique: true,
   },
 
   price: {
-    type: Number
+    type: Number,
+    required: true,
+    min: 100,
   },
 
   status: {
     type: String,
-    default: "Pending"
-  }
-
+    enum: BOOKING_STATUSES,
+    default: "Pending",
+    index: true,
+  },
 }, { timestamps: true });
+
+bookingSchema.index({ userId: 1, createdAt: -1 });
+bookingSchema.index({ status: 1, createdAt: -1 });
 
 export default mongoose.model("Booking", bookingSchema);

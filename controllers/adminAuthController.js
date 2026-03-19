@@ -9,6 +9,7 @@ export const adminLogin = async (req, res) => {
   try {
 
     const { key } = req.body;
+    // console.log("Admin login attempt with key:", key);
 
     if (!key) {
       return res.status(400).json({
