@@ -28,7 +28,6 @@ app.use("/api/auth/send-otp", rateLimit({
 }));
 
 // import authRouter from "./routes/auth.router.js"
-import otpRouter from "./routes/otpRoutes.js"
 import serviceRoutes from "./routes/serviceRoutes.js"
 
 import brandRoutes from "./routes/brandRoutes.js";
@@ -39,9 +38,9 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import firebaseRoutes from "./routes/firebaseRoutes.js";
 import insuranceRoutes from "./routes/insuranceRoutes.js";
 import queryRoutes from "./routes/queryRoutes.js";
+import carServiceRoutes from "./routes/carServiceRoutes.js";
 
 // otp api
-app.use("/api/auth", otpRouter);
 app.use("/api/firebase", firebaseRoutes);
 
 // service api
@@ -61,6 +60,8 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/insurance", insuranceRoutes);
 
 app.use("/api/queries", queryRoutes);
+
+app.use("/api/car-services", carServiceRoutes);
 
 app.get("/", (req, res)=>{
     res.send("server is run");
