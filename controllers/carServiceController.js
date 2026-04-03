@@ -1,21 +1,63 @@
 import CarService from "../models/CarService.js";
 
+const OFFLINE_FREE_SERVICE_TYPES = [
+  "TOP",
+  "FULL",
+  "RUBBING",
+  "POLISHING",
+  "SERVICE",
+  "DP",
+  "FREE",
+];
+
+const isValidPrice = (price) =>
+  typeof price === "number" && !Number.isNaN(price) && price >= 0;
+
+const normalizeOfflineFreeType = (value) => {
+  if (typeof value !== "string") return value;
+  return value.trim().toUpperCase();
+};
+
 // ADMIN - Create Car Service
 export const createCarService = async (req, res) => {
   try {
-    const { carServiceId, carNo, brandModel, userName, mobileNo, price } = req.body;
+    const {
+      carServiceId,
+      carNo,
+      brandModel,
+      userName,
+      mobileNo,
+      token,
+      price,
+      offlineFreeType,
+    } = req.body;
+    const normalizedOfflineType = normalizeOfflineFreeType(offlineFreeType);
 
-    if (!carServiceId || !carNo || !brandModel || !userName || !mobileNo || price === undefined) {
+    if (!carServiceId || !carNo || !brandModel || !userName || !mobileNo) {
       return res.status(400).json({
         success: false,
-        message: "carServiceId, carNo, brandModel, userName, mobileNo and price are required",
+        message: "carServiceId, carNo, brandModel, userName and mobileNo are required",
       });
     }
 
-    if (typeof price !== "number" || Number.isNaN(price) || price < 0) {
+    if (price !== undefined && !isValidPrice(price)) {
       return res.status(400).json({
         success: false,
         message: "Price must be a valid non-negative number",
+      });
+    }
+
+    if (normalizedOfflineType !== undefined && !OFFLINE_FREE_SERVICE_TYPES.includes(normalizedOfflineType)) {
+      return res.status(400).json({
+        success: false,
+        message: `offlineFreeType must be one of: ${OFFLINE_FREE_SERVICE_TYPES.join(", ")}`,
+      });
+    }
+
+    if (price === undefined && !normalizedOfflineType) {
+      return res.status(400).json({
+        success: false,
+        message: "Either price or offlineFreeType is required",
       });
     }
 
@@ -25,7 +67,9 @@ export const createCarService = async (req, res) => {
       brandModel,
       userName,
       mobileNo,
+      token,
       price,
+      offlineFreeType: normalizedOfflineType,
     });
 
     return res.status(201).json({
@@ -34,6 +78,7 @@ export const createCarService = async (req, res) => {
       carService,
     });
   } catch (error) {
+    console.error("Error creating car service:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to create car service",
@@ -89,12 +134,38 @@ export const getCarServiceById = async (req, res) => {
 export const updateCarService = async (req, res) => {
   try {
     const { id } = req.params;
-    const { carServiceId, carNo, brandModel, userName, mobileNo, price } = req.body;
+    const {
+      carServiceId,
+      carNo,
+      brandModel,
+      userName,
+      mobileNo,
+      token,
+      price,
+      offlineFreeType,
+    } = req.body;
+    const normalizedOfflineType = normalizeOfflineFreeType(offlineFreeType);
 
-    if (price !== undefined && (typeof price !== "number" || Number.isNaN(price) || price < 0)) {
+    if (price !== undefined && !isValidPrice(price)) {
       return res.status(400).json({
         success: false,
         message: "Price must be a valid non-negative number",
+      });
+    }
+
+    if (normalizedOfflineType !== undefined && !OFFLINE_FREE_SERVICE_TYPES.includes(normalizedOfflineType)) {
+      return res.status(400).json({
+        success: false,
+        message: `offlineFreeType must be one of: ${OFFLINE_FREE_SERVICE_TYPES.join(", ")}`,
+      });
+    }
+
+    const existingCarService = await CarService.findById(id);
+
+    if (!existingCarService) {
+      return res.status(404).json({
+        success: false,
+        message: "Car service not found",
       });
     }
 
@@ -104,20 +175,28 @@ export const updateCarService = async (req, res) => {
     if (brandModel !== undefined) updateData.brandModel = brandModel;
     if (userName !== undefined) updateData.userName = userName;
     if (mobileNo !== undefined) updateData.mobileNo = mobileNo;
+    if (token !== undefined) updateData.token = token;
     if (price !== undefined) updateData.price = price;
+    if (offlineFreeType !== undefined) updateData.offlineFreeType = normalizedOfflineType;
+
+    const nextPrice = updateData.price !== undefined ? updateData.price : existingCarService.price;
+    const nextOfflineType =
+      updateData.offlineFreeType !== undefined
+        ? updateData.offlineFreeType
+        : existingCarService.offlineFreeType;
+
+    if (nextPrice === undefined && !nextOfflineType) {
+      return res.status(400).json({
+        success: false,
+        message: "Either price or offlineFreeType is required",
+      });
+    }
 
     const carService = await CarService.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     );
-
-    if (!carService) {
-      return res.status(404).json({
-        success: false,
-        message: "Car service not found",
-      });
-    }
 
     return res.json({
       success: true,
