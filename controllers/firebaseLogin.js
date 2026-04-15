@@ -119,7 +119,7 @@ export const firebaseLogin = async (req, res) => {
       console.log("Creating new user", cleanFrontendPhone);
       user = await User.create({
         mobile: cleanFrontendPhone,
-        firebaseUid,
+        // firebaseUid,
         isVerified: true,
       });
     }
