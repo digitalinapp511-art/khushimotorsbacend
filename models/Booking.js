@@ -46,6 +46,23 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     min: 100,
   },
+  totalAmount: {
+    type: Number,
+    required: true,
+    min: 100,
+  },
+  advancePaid: {
+    type: Number,
+    required: true,
+    min: 100,
+    default: 100,
+  },
+  remainingAmount: {
+    type: Number,
+    required: true,
+    min: 0,
+    default: 0,
+  },
 
   status: {
     type: String,

@@ -21,6 +21,7 @@ export const createBooking = async (req, res) => {
       modelId,
       servicePackageId,
       price,
+      totalAmount,
       paymentId,
     } = req.body;
 
@@ -37,18 +38,18 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    if (typeof price !== "number" || Number.isNaN(price)) {
+    const resolvedTotalAmount = Number(totalAmount ?? price);
+    if (Number.isNaN(resolvedTotalAmount)) {
       return res.status(400).json({
         success: false,
-        message: "Price must be a valid number",
+        message: "Total amount must be a valid number",
       });
     }
 
-    // Enforce minimum payment 100 INR
-    if (price < 100) {
+    if (resolvedTotalAmount < 100) {
       return res.status(400).json({
         success: false,
-        message: "Minimum payable amount is 100 INR",
+        message: "Minimum total amount is 100 INR",
       });
     }
 
@@ -65,6 +66,9 @@ export const createBooking = async (req, res) => {
     // const isPaymentValid = await verifyPaymentWithGateway(paymentId, price);
     // if (!isPaymentValid) { ... }
 
+    const advancePaid = 100;
+    const remainingAmount = Math.max(resolvedTotalAmount - advancePaid, 0);
+
     // Create booking with status "Confirmed"
     const booking = await Booking.create({
       userId,
@@ -72,7 +76,11 @@ export const createBooking = async (req, res) => {
       modelId,
       servicePackageId,
       paymentId,
-      price,
+      // Keep `price` as total amount for backward-compatible UIs.
+      price: resolvedTotalAmount,
+      totalAmount: resolvedTotalAmount,
+      advancePaid,
+      remainingAmount,
       // status: "Confirmed", // override default "Pending" on successful payment
     });
 

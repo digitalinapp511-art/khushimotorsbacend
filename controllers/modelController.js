@@ -7,11 +7,13 @@ export const createModel = async (req, res) => {
 
   try {
 
-    const { brandId, name } = req.body;
+    const { brandId, name, image, icon } = req.body;
 
     const model = await CarModel.create({
       brandId,
-      name
+      name,
+      image: image || "",
+      icon: icon || ""
     });
 
     res.status(201).json({

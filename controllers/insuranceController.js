@@ -68,6 +68,98 @@ const deleteCloudinaryFile = async (fileUrl) => {
 };
 
 // USER - Create Insurance
+// export const createInsurance = async (req, res) => {
+//   try {
+//     const {
+//       policyNo,
+//       insuranceCompany,
+//       vehicleNo,
+//       vehicleName,
+//       policyValidity,
+//       customerName,
+//       customerNumber,
+//       agentName,
+//       jobNumber,
+//     } = req.body;
+
+//     console.log("Received insurance creation request with data:", req.body);
+
+//     const requiredFields = {
+//       policyNo,
+//       insuranceCompany,
+//       vehicleNo,
+//       vehicleName,
+//       policyValidity,
+//       customerName,
+//       customerNumber
+//     };
+
+//     const missingFields = Object.entries(requiredFields)
+//       .filter(([, value]) => !String(value || "").trim())
+//       .map(([key]) => key);
+
+//     if (missingFields.length) {
+//       return res.status(400).json({
+//         success: false,
+//         message: `Missing required fields: ${missingFields.join(", ")}`
+//       });
+//     }
+
+//     const policyDocFile = req.files?.policyDoc?.[0];
+//     const rcFile = req.files?.rc?.[0];
+//     const panAadharFile = req.files?.panAadhar?.[0];
+
+    
+//     if (!policyDocFile || !rcFile || !panAadharFile) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "policyDoc, rc, and panAadhar files are required"
+//       });
+ 
+//     }
+//     const [policyDocUpload, rcUpload, panAadharUpload] = await Promise.all([
+//       uploadBufferToCloudinary(policyDocFile, "insurance/policy-docs"),
+//       uploadBufferToCloudinary(rcFile, "insurance/rc"),
+//       uploadBufferToCloudinary(panAadharFile, "insurance/pan-aadhar")
+//     ]);
+
+//     const insurance = await Insurance.create({
+//       policyNo,
+//       insuranceCompany,
+//       vehicleNo,
+//       vehicleName,
+//       policyValidity,
+//       customerName,
+//       customerNumber,
+//       agentName,
+//       jobNumber,
+//       policyDoc: policyDocUpload.secure_url,
+//       rc: rcUpload.secure_url,
+//       panAadhar: panAadharUpload.secure_url
+//     });
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "Insurance submitted successfully",
+//       insurance: addFileUrls(insurance)
+//     });
+//   } catch (error) {
+//     if (error.message === "Only PDF, JPG, and PNG files are allowed") {
+//       return res.status(400).json({
+//         success: false,
+//         message: error.message
+//       });
+//     }
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Insurance submission failed"
+//     });
+//   }
+// };
+
+
+
 export const createInsurance = async (req, res) => {
   try {
     const {
@@ -84,6 +176,7 @@ export const createInsurance = async (req, res) => {
 
     console.log("Received insurance creation request with data:", req.body);
 
+    // ✅ Validate required fields
     const requiredFields = {
       policyNo,
       insuranceCompany,
@@ -105,6 +198,16 @@ export const createInsurance = async (req, res) => {
       });
     }
 
+    // ✅ 🔥 DATE FIX (MOST IMPORTANT)
+    const parsedDate = new Date(policyValidity);
+
+    if (isNaN(parsedDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid date format. Use YYYY-MM-DD"
+      });
+    }
+
     const policyDocFile = req.files?.policyDoc?.[0];
     const rcFile = req.files?.rc?.[0];
     const panAadharFile = req.files?.panAadhar?.[0];
@@ -115,6 +218,7 @@ export const createInsurance = async (req, res) => {
         message: "policyDoc, rc, and panAadhar files are required"
       });
     }
+
     const [policyDocUpload, rcUpload, panAadharUpload] = await Promise.all([
       uploadBufferToCloudinary(policyDocFile, "insurance/policy-docs"),
       uploadBufferToCloudinary(rcFile, "insurance/rc"),
@@ -126,11 +230,15 @@ export const createInsurance = async (req, res) => {
       insuranceCompany,
       vehicleNo,
       vehicleName,
-      policyValidity,
+
+      // ✅ FIXED
+      policyValidity: parsedDate,
+
       customerName,
       customerNumber,
       agentName,
       jobNumber,
+      reminder1DaySent: false,
       policyDoc: policyDocUpload.secure_url,
       rc: rcUpload.secure_url,
       panAadhar: panAadharUpload.secure_url
@@ -141,20 +249,15 @@ export const createInsurance = async (req, res) => {
       message: "Insurance submitted successfully",
       insurance: addFileUrls(insurance)
     });
-  } catch (error) {
-    if (error.message === "Only PDF, JPG, and PNG files are allowed") {
-      return res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
 
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: "Insurance submission failed"
     });
   }
 };
+
 
 // ADMIN - Get All Insurance
 export const getInsuranceList = async (req, res) => {
@@ -226,11 +329,27 @@ export const updateInsurance = async (req, res) => {
     if (insuranceCompany !== undefined) insurance.insuranceCompany = insuranceCompany;
     if (vehicleNo !== undefined) insurance.vehicleNo = vehicleNo;
     if (vehicleName !== undefined) insurance.vehicleName = vehicleName;
-    if (policyValidity !== undefined) insurance.policyValidity = policyValidity;
+    // if (policyValidity !== undefined) insurance.policyValidity = policyValidity;
     if (customerName !== undefined) insurance.customerName = customerName;
     if (customerNumber !== undefined) insurance.customerNumber = customerNumber;
     if (agentName !== undefined) insurance.agentName = agentName;
     if (jobNumber !== undefined) insurance.jobNumber = jobNumber;
+
+
+    if (policyValidity !== undefined) {
+      const parsedDate = new Date(policyValidity);
+
+      if (isNaN(parsedDate)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid date format. Use YYYY-MM-DD"
+        });
+      }
+
+      insurance.policyValidity = parsedDate;
+      insurance.reminder1DaySent = false;
+    }
+
 
     const newPolicyDoc = req.files?.policyDoc?.[0];
     const newRc = req.files?.rc?.[0];

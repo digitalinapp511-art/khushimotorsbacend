@@ -40,6 +40,10 @@ import firebaseRoutes from "./routes/firebaseRoutes.js";
 import insuranceRoutes from "./routes/insuranceRoutes.js";
 import queryRoutes from "./routes/queryRoutes.js";
 import carServiceRoutes from "./routes/carServiceRoutes.js";
+// import "./services/cron.js";
+// import {test} from "./services/test.js";
+
+
 
 // otp api
 app.use("/api/firebase", firebaseRoutes);
@@ -68,10 +72,12 @@ app.get("/", (req, res)=>{
     res.send("server is run");
 })
 
-// database connected
+// Database Connected
 connectDB();
 
 const PORT=process.env.PORT || 8080;
+
+// test()
 
 app.listen(PORT, ()=>{
     console.log(`server is running on http://localhost:${PORT}`);

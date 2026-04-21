@@ -59,6 +59,10 @@ const insuranceSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: "pending"
+  },
+  reminder1DaySent: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

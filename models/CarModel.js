@@ -11,6 +11,16 @@ const carModelSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true
+  },
+
+  image: {
+    type: String,
+    default: ""
+  },
+
+  icon: {
+    type: String,
+    default: ""
   }
 
 });
