@@ -36,9 +36,21 @@ const bookingSchema = new mongoose.Schema({
 
   paymentId: {
     type: String,
+    required: false,
+    trim: true,
+    sparse: true,
+  },
+
+  token: {
+    type: String,
     required: true,
     trim: true,
     unique: true,
+  },
+
+  customerPhone: {
+    type: String,
+    trim: true,
   },
 
   price: {
@@ -74,5 +86,7 @@ const bookingSchema = new mongoose.Schema({
 
 bookingSchema.index({ userId: 1, createdAt: -1 });
 bookingSchema.index({ status: 1, createdAt: -1 });
+// bookingSchema.index({ token: 1 }, { unique: true });
+// bookingSchema.index({ paymentId: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model("Booking", bookingSchema);

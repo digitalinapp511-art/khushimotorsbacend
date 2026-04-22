@@ -16,8 +16,12 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: ["http://localhost:5173",
-    "https://khushimotors.co.in"],
+  origin: [
+    "http://localhost:5173",
+    "https://khushimotors.co.in",
+    "https://www.khushimotors.co.in",
+    "https://mediumslateblue-ibis-414213.hostingersite.com",
+  ],
   credentials: true
 }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

@@ -1,16 +1,20 @@
 import twilio from "twilio";
 
-const client = twilio(
-    process.env.ACCOUNT_SID,
-    process.env.AUTH_TOKEN
-);
+const accountSid = process.env.TWILIO_ACCOUNT_SID || process.env.ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN || process.env.AUTH_TOKEN;
+const whatsappFrom = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+
+const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 
 export const sendWhatsApp = async (phone, message) => {
     try {
+        if (!client) {
+            console.warn("Twilio is not configured. Skipping WhatsApp message.");
+            return;
+        }
+
         await client.messages.create({
-            // Twilio sandbox
-            from: "whatsapp:+14155238886", 
-            // from: "whatsapp:+17754415324", 
+            from: whatsappFrom,
             to: `whatsapp:+91${phone}`,
             body: message
         });
