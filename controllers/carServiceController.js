@@ -236,3 +236,60 @@ export const deleteCarService = async (req, res) => {
     });
   }
 };
+
+// ADMIN - Search Car Numbers for Autocomplete
+export const searchCarNumbers = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim().length < 2) {
+      return res.json({
+        success: true,
+        suggestions: [],
+      });
+    }
+
+    const searchQuery = query.trim().toUpperCase();
+    
+    // Find unique car numbers that match the query
+    const carServices = await CarService.find({
+      carNo: { $regex: searchQuery, $options: "i" }
+    })
+    .select('carNo brandModel userName mobileNo token price offlineFreeType carServiceId')
+    .populate('carServiceId', 'name')
+    .limit(10)
+    .sort({ createdAt: -1 });
+
+    // Group by car number and get the most recent entry for each
+    const uniqueCarNumbers = {};
+    carServices.forEach(service => {
+      const carNo = service.carNo;
+      if (!uniqueCarNumbers[carNo] || service.createdAt > uniqueCarNumbers[carNo].createdAt) {
+        uniqueCarNumbers[carNo] = service;
+      }
+    });
+
+    const suggestions = Object.values(uniqueCarNumbers).map(service => ({
+      carNo: service.carNo,
+      brandModel: service.brandModel,
+      userName: service.userName,
+      mobileNo: service.mobileNo,
+      token: service.token || "",
+      price: service.price || "",
+      offlineFreeType: service.offlineFreeType || "",
+      carServiceId: service.carServiceId?._id || service.carServiceId || "",
+      serviceName: service.carServiceId?.name || "",
+    }));
+
+    return res.json({
+      success: true,
+      suggestions,
+    });
+  } catch (error) {
+    console.error("Error searching car numbers:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to search car numbers",
+    });
+  }
+};
