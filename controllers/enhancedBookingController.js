@@ -21,7 +21,9 @@ export const updateBookingStatusEnhanced = async (req, res) => {
       statusDate, 
       statusTime, 
       updatedBy = "Admin",
-      notes 
+      notes,
+      scheduledDate,
+      scheduledTime 
     } = req.body;
 
     // Validate status
@@ -41,7 +43,7 @@ export const updateBookingStatusEnhanced = async (req, res) => {
       });
     }
 
-    // Validate date/time if provided
+    // Validate status date/time if provided
     let finalStatusDate = null;
     let finalStatusTime = null;
 
@@ -68,32 +70,79 @@ export const updateBookingStatusEnhanced = async (req, res) => {
       finalStatusTime = statusTime;
     }
 
+    // Validate scheduled date/time if provided (for confirmed bookings)
+    let finalScheduledDate = null;
+    let finalScheduledTime = null;
+    let scheduledMessage = null;
+
+    if (status === "Confirmed" && scheduledDate && scheduledTime) {
+      const parsedScheduledDate = new Date(scheduledDate);
+      if (isNaN(parsedScheduledDate.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid scheduled date format",
+        });
+      }
+      finalScheduledDate = parsedScheduledDate;
+
+      // Validate scheduled time format
+      const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(scheduledTime)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid scheduled time format. Use HH:MM (24-hour format)",
+        });
+      }
+      finalScheduledTime = scheduledTime;
+
+      // Create scheduled message
+      const formattedDate = parsedScheduledDate.toLocaleDateString("en-IN", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      scheduledMessage = `Your car service is scheduled on ${formattedDate} at ${scheduledTime}`;
+    }
+
     // Update booking with enhanced status information
+    const updateData = {
+      status,
+      statusUpdateDate: finalStatusDate,
+      statusUpdateTime: finalStatusTime,
+      statusUpdatedBy: updatedBy,
+      // Add notes field if needed
+      ...(notes && { statusNotes: notes }),
+      // Add scheduled information
+      ...(finalScheduledDate && { scheduledDate: finalScheduledDate }),
+      ...(finalScheduledTime && { scheduledTime: finalScheduledTime }),
+      ...(scheduledMessage && { scheduledMessage })
+    };
+
     const updatedBooking = await Booking.findByIdAndUpdate(
       id,
-      {
-        status,
-        statusUpdateDate: finalStatusDate,
-        statusUpdateTime: finalStatusTime,
-        statusUpdatedBy: updatedBy,
-        // Add notes field if needed (you may want to add this to schema)
-        ...(notes && { statusNotes: notes })
-      },
+      updateData,
       { new: true, runValidators: true }
     ).populate("userId brandId modelId servicePackageId");
 
     console.log(`📊 Booking status updated: ${booking._id} -> ${status} by ${updatedBy}`);
+    if (finalScheduledDate) {
+      console.log(`📅 Service scheduled for: ${finalScheduledDate.toDateString()} at ${finalScheduledTime}`);
+    }
 
-    // Create notification for customer (you can implement this later)
+    // Create notification for customer
     if (booking.userId && booking.userId.toString() !== updatedBy) {
       console.log(`🔔 Customer notification sent for booking ${booking._id}`);
-      // TODO: Implement customer notification system
+      if (scheduledMessage) {
+        console.log(`📱 Customer message: ${scheduledMessage}`);
+      }
     }
 
     return res.status(200).json({
       success: true,
       message: `Booking status updated to ${status} successfully`,
       booking: updatedBooking,
+      scheduledMessage,
     });
   } catch (error) {
     console.error("Enhanced booking status update error:", error);

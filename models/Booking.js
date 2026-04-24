@@ -98,6 +98,21 @@ const bookingSchema = new mongoose.Schema({
     type: String,
     default: "System",
   },
+
+  scheduledDate: {
+    type: Date,
+    default: null,
+  },
+
+  scheduledTime: {
+    type: String,
+    default: null,
+  },
+
+  scheduledMessage: {
+    type: String,
+    default: null,
+  },
 }, { timestamps: true });
 
 bookingSchema.index({ userId: 1, createdAt: -1 });
