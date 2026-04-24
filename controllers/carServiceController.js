@@ -1,4 +1,5 @@
 import CarService from "../models/CarService.js";
+import { generateBookingToken } from "../services/tokenService.js";
 
 const OFFLINE_FREE_SERVICE_TYPES = [
   "TOP",
@@ -27,7 +28,6 @@ export const createCarService = async (req, res) => {
       brandModel,
       userName,
       mobileNo,
-      token,
       price,
       offlineFreeType,
     } = req.body;
@@ -60,6 +60,9 @@ export const createCarService = async (req, res) => {
         message: "Either price or offlineFreeType is required",
       });
     }
+
+    // Auto-generate token for offline services
+    const token = await generateBookingToken();
 
     const carService = await CarService.create({
       carServiceId,
@@ -140,7 +143,6 @@ export const updateCarService = async (req, res) => {
       brandModel,
       userName,
       mobileNo,
-      token,
       price,
       offlineFreeType,
     } = req.body;
@@ -175,7 +177,6 @@ export const updateCarService = async (req, res) => {
     if (brandModel !== undefined) updateData.brandModel = brandModel;
     if (userName !== undefined) updateData.userName = userName;
     if (mobileNo !== undefined) updateData.mobileNo = mobileNo;
-    if (token !== undefined) updateData.token = token;
     if (price !== undefined) updateData.price = price;
     if (offlineFreeType !== undefined) updateData.offlineFreeType = normalizedOfflineType;
 

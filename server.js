@@ -44,6 +44,7 @@ import firebaseRoutes from "./routes/firebaseRoutes.js";
 import insuranceRoutes from "./routes/insuranceRoutes.js";
 import queryRoutes from "./routes/queryRoutes.js";
 import carServiceRoutes from "./routes/carServiceRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 // import "./services/cron.js";
 // import {test} from "./services/test.js";
 
@@ -71,6 +72,8 @@ app.use("/api/insurance", insuranceRoutes);
 app.use("/api/queries", queryRoutes);
 
 app.use("/api/car-services", carServiceRoutes);
+
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req, res)=>{
     res.send("server is run");
