@@ -1,5 +1,7 @@
 import CarService from "../models/CarService.js";
+import Service from "../models/Service.js";
 import { generateBookingToken } from "../services/tokenService.js";
+import { shouldGenerateToken } from "../utils/serviceTypeChecker.js";
 
 const OFFLINE_FREE_SERVICE_TYPES = [
   "TOP",
@@ -61,8 +63,20 @@ export const createCarService = async (req, res) => {
       });
     }
 
-    // Auto-generate token for offline services
-    const token = await generateBookingToken();
+    // Get service details to check if token should be generated
+    const service = await Service.findById(carServiceId);
+    const serviceName = service?.name || '';
+    
+    // Check if this is a car service that should generate token
+    const shouldGenerate = shouldGenerateToken(serviceName);
+    let token = null;
+    
+    if (shouldGenerate) {
+      console.log(" Car service - generating token for offline service");
+      token = await generateBookingToken();
+    } else {
+      console.log(" Non-car service detected - skipping token generation for offline service");
+    }
 
     const carService = await CarService.create({
       carServiceId,

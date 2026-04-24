@@ -1,5 +1,7 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+
+import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit"
 import cookieParser from "cookie-parser"
@@ -8,8 +10,8 @@ import path from "path";
 
 import connectDB from "./config/db.js";
 
+
 const app = express();
-dotenv.config()
 
 app.use(helmet());
 app.use(express.json());
@@ -45,6 +47,7 @@ import insuranceRoutes from "./routes/insuranceRoutes.js";
 import queryRoutes from "./routes/queryRoutes.js";
 import carServiceRoutes from "./routes/carServiceRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import enhancedBookingRoutes from "./routes/enhancedBookingRoutes.js";
 // import "./services/cron.js";
 // import {test} from "./services/test.js";
 
@@ -74,6 +77,8 @@ app.use("/api/queries", queryRoutes);
 app.use("/api/car-services", carServiceRoutes);
 
 app.use("/api/payments", paymentRoutes);
+
+app.use("/api/bookings-enhanced", enhancedBookingRoutes);
 
 app.get("/", (req, res)=>{
     res.send("server is run");

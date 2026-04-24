@@ -43,8 +43,9 @@ const bookingSchema = new mongoose.Schema({
 
   token: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
+    sparse: true, // Allows multiple null values for uniqueness
     unique: true,
   },
 
@@ -81,6 +82,21 @@ const bookingSchema = new mongoose.Schema({
     enum: BOOKING_STATUSES,
     default: "Pending",
     index: true,
+  },
+
+  statusUpdateDate: {
+    type: Date,
+    default: null,
+  },
+
+  statusUpdateTime: {
+    type: String,
+    default: null,
+  },
+
+  statusUpdatedBy: {
+    type: String,
+    default: "System",
   },
 }, { timestamps: true });
 

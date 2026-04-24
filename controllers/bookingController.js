@@ -440,21 +440,32 @@
 import Booking from "../models/Booking.js";
 import User from "../models/User.js";
 import { generateBookingToken } from "../services/tokenService.js";
+import { processBookingToken } from "../utils/serviceTypeChecker.js";
 
 const BOOKING_TOKEN_MAX_RETRY = 5;
 
 const normalizePhone = (value) => String(value || "").replace(/\D/g, "").slice(-10);
 
-// ✅ SIRF EK BAAR - token generate karke booking save karta hai
+// ✅ Enhanced booking creation with car service token checking
 const createBookingWithToken = async (bookingData) => {
   let retries = 0;
   console.log("📦 createBookingWithToken called!");
 
+  // Process token based on service type
+  const processedBookingData = await processBookingToken(bookingData);
+  
+  // If no token needed (car service), create booking directly
+  if (!processedBookingData.token) {
+    console.log("🚗 Creating car service booking without token");
+    return await Booking.create(processedBookingData);
+  }
+
+  // For regular services, generate token with retry logic
   while (retries < BOOKING_TOKEN_MAX_RETRY) {
     try {
       const token = await generateBookingToken();
       console.log("💾 Saving booking with token:", token);
-      return await Booking.create({ ...bookingData, token });
+      return await Booking.create({ ...processedBookingData, token });
     } catch (error) {
       console.error("❌ Booking create error:", error);
       if (error?.code === 11000 && error?.keyPattern?.token) {
