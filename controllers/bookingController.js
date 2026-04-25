@@ -737,7 +737,7 @@ export const getAllBookings = async (req, res) => {
  */
 export const updateBookingStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, scheduledDate, scheduledTime, statusDate, statusTime, updatedBy, notes } = req.body;
 
     if (!status) {
       return res.status(400).json({
@@ -746,9 +746,34 @@ export const updateBookingStatus = async (req, res) => {
       });
     }
 
+    const updateFields = { status };
+
+    // Always record when and by whom the status was changed
+    updateFields.statusUpdateDate = statusDate ? new Date(statusDate) : new Date();
+    updateFields.statusUpdateTime = statusTime || new Date().toTimeString().slice(0, 5);
+    updateFields.statusUpdatedBy = updatedBy || "Admin";
+
+    // When confirming, save the scheduled service date/time for the customer
+    if (status === "Confirmed") {
+      if (scheduledDate) updateFields.scheduledDate = new Date(scheduledDate);
+      if (scheduledTime) updateFields.scheduledTime = scheduledTime;
+
+      if (scheduledDate && scheduledTime) {
+        const formattedDate = new Date(scheduledDate).toLocaleDateString("en-IN", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+        updateFields.scheduledMessage = `Your service is scheduled for ${formattedDate} at ${scheduledTime}`;
+      }
+    }
+
+    if (notes) updateFields.scheduledMessage = notes;
+
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
-      { status },
+      updateFields,
       { new: true }
     );
 
