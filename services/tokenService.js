@@ -1,28 +1,25 @@
-import TokenCounter from "../models/TokenCounter.js";
-
-const TOKEN_KEY = "BOOKING_TOKEN";
-const TOKEN_MAX = 20;
+import Booking from "../models/Booking.js";
 
 export const generateBookingToken = async () => {
   console.log("🚀 generateBookingToken called!");
 
+  // Build start and end of today (midnight to midnight)
+  const now = new Date();
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+  const endOfDay   = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  console.log("� Date range:", startOfDay, "→", endOfDay);
+
   try {
-    // Atomically increment the counter
-    const counter = await TokenCounter.findOneAndUpdate(
-      { key: TOKEN_KEY },
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
+    const todayCount = await Booking.countDocuments({
+      createdAt: { $gte: startOfDay, $lte: endOfDay },
+    });
 
-    console.log("🔢 Counter after increment:", counter.seq);
-
-    // Wrap around: compute token in range 1–20
-    const token = ((counter.seq - 1) % TOKEN_MAX) + 1;
-
-    console.log("✅ Token:", token);
-    return String(token);
+    const token = String(todayCount + 1);
+    console.log("✅ Token:", token, "(today's bookings so far:", todayCount, ")");
+    return token;
   } catch (err) {
-    console.error("❌ TokenCounter error:", err);
+    console.error("❌ Token generation error:", err);
     throw err;
   }
 };
