@@ -103,18 +103,50 @@ export const createCarService = async (req, res) => {
   }
 };
 
-// ADMIN - Get All Car Services
+// ADMIN - Get All Car Services (supports ?date=YYYY-MM-DD&search=...)
 export const getAllCarServices = async (req, res) => {
   try {
-    const carServices = await CarService.find()
+    const { date, search } = req.query;
+
+    // Resolve target date — default to today
+    const targetDate = date ? new Date(date) : new Date();
+    if (isNaN(targetDate.getTime())) {
+      return res.status(400).json({ success: false, message: "Invalid date format. Use YYYY-MM-DD." });
+    }
+
+    // Build start/end of the target day (ignores time component)
+    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
+    const endOfDay   = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+
+    const filter = { createdAt: { $gte: startOfDay, $lte: endOfDay } };
+
+    // Apply search filter across userName, carNo, mobileNo
+    if (search && search.trim()) {
+      const q = search.trim();
+      const digits = q.replace(/\D/g, "");
+      const orClauses = [
+        { userName: { $regex: q, $options: "i" } },
+        { carNo:    { $regex: q, $options: "i" } },
+        { mobileNo: { $regex: q, $options: "i" } },
+      ];
+      if (digits.length > 0) {
+        orClauses.push({ mobileNo: { $regex: digits, $options: "i" } });
+      }
+      filter.$or = orClauses;
+    }
+
+    const carServices = await CarService.find(filter)
       .populate("carServiceId")
       .sort({ createdAt: -1 });
 
     return res.json({
       success: true,
       carServices,
+      total: carServices.length,
+      date: startOfDay.toISOString().split("T")[0],
     });
   } catch (error) {
+    console.error("Error fetching car services:", error);
     return res.status(500).json({
       success: false,
       message: "Failed to fetch car services",
