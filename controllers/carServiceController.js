@@ -103,10 +103,10 @@ export const createCarService = async (req, res) => {
   }
 };
 
-// ADMIN - Get All Car Services (supports ?date=YYYY-MM-DD&search=...)
+// ADMIN - Get All Car Services (supports ?date=YYYY-MM-DD&search=...&service=...)
 export const getAllCarServices = async (req, res) => {
   try {
-    const { date, search } = req.query;
+    const { date, search, service } = req.query;
 
     // Resolve target date — default to today
     const targetDate = date ? new Date(date) : new Date();
@@ -114,13 +114,31 @@ export const getAllCarServices = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid date format. Use YYYY-MM-DD." });
     }
 
-    // Build start/end of the target day (ignores time component)
-    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
-    const endOfDay   = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
+    // UTC-safe start/end of day so local and production behave identically
+    const startOfDay = new Date(
+      Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 0, 0, 0, 0)
+    );
+    const endOfDay = new Date(
+      Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate(), 23, 59, 59, 999)
+    );
 
     const filter = { createdAt: { $gte: startOfDay, $lte: endOfDay } };
 
-    // Apply search filter across userName, carNo, mobileNo
+    // Service name filter — match against populated service name
+    // We resolve service ObjectIds first, then filter by carServiceId
+    if (service && service.trim()) {
+      const serviceDoc = await Service.findOne({
+        name: { $regex: service.trim(), $options: "i" },
+      }).select("_id");
+      if (serviceDoc) {
+        filter.carServiceId = serviceDoc._id;
+      } else {
+        // No matching service → return empty
+        return res.json({ success: true, carServices: [], total: 0, date: startOfDay.toISOString().split("T")[0] });
+      }
+    }
+
+    // Search filter across userName, carNo, mobileNo
     if (search && search.trim()) {
       const q = search.trim();
       const digits = q.replace(/\D/g, "");
